@@ -1,0 +1,26 @@
+# ── Environment ──────────────────────────────────────────────────────────────
+environment:
+  name: dev
+  identifier: dev
+  orgIdentifier: harness_cicd_org
+  projectIdentifier: harness_cicd_project
+  type: PreProduction
+  tags: {}
+
+---
+# ── Infrastructure Definition ─────────────────────────────────────────────────
+# KubernetesDirect connects through the Harness Delegate running in minikube.
+infrastructureDefinition:
+  name: dev-minikube
+  identifier: dev_minikube
+  orgIdentifier: harness_cicd_org
+  projectIdentifier: harness_cicd_project
+  environmentRef: dev
+  deploymentType: Kubernetes
+  type: KubernetesDirect
+  spec:
+    # Kubernetes connector created in Part 2, Step A
+    connectorRef: minikube_k8s_connector
+    namespace: default
+    releaseName: release-<+INFRA_KEY_SHORT_ID>
+  allowSimultaneousDeployments: false

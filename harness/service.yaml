@@ -1,0 +1,38 @@
+service:
+  name: harness-demo-service
+  identifier: harness_demo_service
+  orgIdentifier: harness_cicd_org
+  projectIdentifier: harness_cicd_project
+  serviceDefinition:
+    type: Kubernetes
+    spec:
+      manifests:
+        - manifest:
+            identifier: k8s_manifests
+            type: K8sManifest
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: github_connector
+                  gitFetchType: Branch
+                  branch: main
+                  repoName: harness-cicd-takehome
+                  paths:
+                    - k8s/deployment.yaml
+                    - k8s/service.yaml
+              skipResourceVersioning: false
+      artifacts:
+        primary:
+          primaryArtifactRef: dockerhub_image
+          sources:
+            - identifier: dockerhub_image
+              type: DockerRegistry
+              spec:
+                connectorRef: dockerhub_connector
+                # imagePath is relative to Docker Hub (no host needed)
+                imagePath: amritesh7781/harness-demo-app
+                # <+trigger.artifact.build> is injected by the artifact trigger;
+                # for a manual run, Harness prompts you to enter a tag.
+                tag: <+trigger.artifact.build>
+  gitOpsEnabled: false

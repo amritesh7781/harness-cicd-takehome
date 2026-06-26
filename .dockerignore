@@ -1,0 +1,5 @@
+.git
+harness/
+k8s/
+*.md
+node_modules

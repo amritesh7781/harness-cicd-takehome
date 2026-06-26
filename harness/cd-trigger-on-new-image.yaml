@@ -1,0 +1,50 @@
+# Part 12 — Trigger: auto-start cd-deploy-pipeline when ci-build-pipeline
+# pushes a new image tag to amritesh7781/harness-demo-app on Docker Hub.
+#
+# HOW IT WORKS:
+#   Harness polls Docker Hub for new tags on amritesh7781/harness-demo-app.
+#   When a new tag appears (pushed by ci-build-pipeline), it fires cd-deploy-pipeline
+#   and passes the new tag as <+trigger.artifact.build>.
+#
+# RECOMMENDATION: create this trigger in the UI (cd-deploy-pipeline -> Triggers ->
+# New Trigger -> Artifact -> Docker Registry) — the UI auto-generates the correct
+# inputYaml mapping. Use this file only as a reference or for Git-synced pipelines.
+
+trigger:
+  name: On New Docker Hub Image
+  identifier: On_New_Docker_Hub_Image
+  enabled: true
+  orgIdentifier: harness_cicd_org
+  projectIdentifier: harness_cicd_project
+  pipelineIdentifier: cd_deploy_pipeline
+  source:
+    type: Artifact
+    spec:
+      type: DockerRegistry
+      spec:
+        connectorRef: dockerhub_connector
+        imagePath: amritesh7781/harness-demo-app
+        tag: <+trigger.artifact.build>
+        eventConditions: []
+  inputYaml: |
+    pipeline:
+      identifier: cd_deploy_pipeline
+      stages:
+        - stage:
+            identifier: Deploy
+            type: Deployment
+            spec:
+              service:
+                serviceRef: harness_demo_service
+                serviceInputs:
+                  serviceDefinition:
+                    type: Kubernetes
+                    spec:
+                      artifacts:
+                        primary:
+                          primaryArtifactRef: dockerhub_image
+                          sources:
+                            - identifier: dockerhub_image
+                              type: DockerRegistry
+                              spec:
+                                tag: <+trigger.artifact.build>

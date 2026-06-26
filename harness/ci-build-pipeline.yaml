@@ -1,0 +1,44 @@
+pipeline:
+  name: ci-build-pipeline
+  identifier: ci_build_pipeline
+  projectIdentifier: harness_cicd_project
+  orgIdentifier: harness_cicd_org
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_connector
+        repoName: harness-cicd-takehome
+        build: <+input>
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build and Push to Docker Hub
+                  identifier: Build_and_Push_to_Docker_Hub
+                  spec:
+                    # Connector: Docker Hub connector (created in Part 1, Step B)
+                    connectorRef: dockerhub_connector
+                    # Image: <dockerhub-username>/<app-name>
+                    repo: amritesh7781/harness-demo-app
+                    # Tags: sequenceId for traceability + latest for convenience
+                    tags:
+                      - <+pipeline.sequenceId>
+                      - latest
+                    # Dockerfile path (required by assignment)
+                    dockerfile: Dockerfile
+                    context: .
+                  timeout: 20m

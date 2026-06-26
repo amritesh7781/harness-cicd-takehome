@@ -1,0 +1,76 @@
+pipeline:
+  name: cd-deploy-pipeline
+  identifier: cd_deploy_pipeline
+  projectIdentifier: harness_cicd_project
+  orgIdentifier: harness_cicd_org
+  tags: {}
+  stages:
+    - stage:
+        name: Deploy
+        identifier: Deploy
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: harness_demo_service
+          environment:
+            environmentRef: dev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: dev_minikube
+          execution:
+            steps:
+              # ── Canary Phase ──────────────────────────────────────────────
+              # Native Canary Deployment step: deploys 1 canary pod first
+              - step:
+                  name: Canary Deployment
+                  identifier: canaryDeployment
+                  type: K8sCanaryDeploy
+                  timeout: 10m
+                  spec:
+                    instanceSelection:
+                      type: Count
+                      spec:
+                        count: 1
+                    skipDryRun: false
+
+              # Native Canary Delete step: cleans up the canary pod
+              - step:
+                  name: Canary Delete
+                  identifier: canaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 10m
+                  spec: {}
+
+              # ── Primary Phase ─────────────────────────────────────────────
+              # Native Rollout Deployment step: full rolling rollout
+              - step:
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  type: K8sRollingDeploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+
+            # Rollback steps — auto-triggered on failure
+            rollbackSteps:
+              - step:
+                  name: Canary Delete
+                  identifier: rollbackCanaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  name: Rolling Rollback
+                  identifier: rollingRollback
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

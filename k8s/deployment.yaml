@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness-demo-app
+  labels:
+    app: harness-demo-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: harness-demo-app
+  template:
+    metadata:
+      labels:
+        app: harness-demo-app
+    spec:
+      containers:
+        - name: harness-demo-app
+          image: <+artifact.image>
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
