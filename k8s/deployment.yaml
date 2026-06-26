@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: harness-demo-app
-          image: <+artifact.image>
+          image: amritesh7781/harness-demo-app:latest
           ports:
             - containerPort: 8080
           readinessProbe:
